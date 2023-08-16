@@ -1,0 +1,57 @@
+=====| INSTAGRAM CLONE |=====
+1. Create project: .env file sensitive files in it -> python-decouple | postgres connect
+2. User va Shared modeli: 
+    - startapp users > User model yasash -> shared app | VIA_EMAIL kabi nomlar qoyish
+    - Custom User model yasalgandan keyin settings.py AUTH_USER_MODEL = "users.User" ko'rinishida berib, bazani o'chirib qaytadan create va migrate qilish kerak
+    - Demak USER modelini override qilishni organdik!
+3. UserConfirmation Model:
+    - Confirm qilish uchun expire time qoshiladi (models.py davom ettirilgan holda) > .save() override -> super() metodi orqali save qilinadi
+    - @property orqali fullname uchun Read-only attribute qoshiladi
+    - create_verify_code - signup qilganda email yoki numberga smsni verify qilish uchun funksiya yozamiz
+4. User Model: save() method override
+    - check_username(), check_email(), check_password(), hashing_password() - token() -> simplejwt install
+    - Agar Pylance import resolve qilolmasa interpreterni tekshir: VirtualENv directoryga otkaz
+    - save() metodi override qilinadi
+5. SignUpSerializer auth validate -> open serializers.py in users
+    - serializer ichida extra_kwargs qoshish usuli (Meta ichida yozilishi shart bolmasa kutilmagan errorlar chiqadi)
+    - @staticmethod(auth_validate()) > tekshirish uchun view va urls ham yozib olish > Postman request send
+    - email/phone check > shared/utility.py da RegEx lar yordamida
+    + Serializer Validate va Create methods: 
+    - check qilingach mos ravishda VIA_EMAIL yoki VIA_PHONE orqali qaytarish
+    - create() metodini yozish
+6. Asinxron tarzda email jo'natish va to-representation
+    - utility.py > EmailThread va Email classlari, threading ishlatish -> concurrent va alohida ishlashi ta'minlanadi
+    - send_email() funksiyasi yoziladi <SMTP pullik va bizda bolmagani uchun email consolega keladigan qilib qoyamiz>
+    - xatoliklar tuzatilib, postmanda email orqali register qilib koriladi
+    - regexdan so'ng phonenumbers lib orqali check qilinadi
+    - IntegrityError oldini olish uchun filter > validate_email_phone funksiyasi serializer.py da
+7. VerifyAPIView - Userni tasdiqlash
+    - send_phone_code() > pipenv install twilio > Phone code pullik, shu sabab xuddi email kabi consolega chiqarib turamiz
+    - views.py > VerifyAPIView yozish > check_verify() static method -> settings.py da rest.authtoken qoshiladi
+    - settings.py: REST_FRAMEWORK va SIMPLE_JWT sozlamalari qo'shilib, migrate qilinadi
+    !> Tasdiqlash kodini qayta jo'natish:  GetNewVerification: Yangi tasdiqlash kodini olish
+    - new-verify Postman orqali jonatganda AccessToken kiritish shart, aks holda userni tanimaydi
+8. User ma'lumotlarini o'zgartirish
+    - serializers.py > ChangeUserInformation > User haqida barcha ma'lumotlarni validate qilamiz
+    - views.py > ChangeUserInformationView ochish > get_object() -> update() -> partial_update() metodlari
+    - Postmanda test qilish: yangi user signup va verify qilib, change-user/ endpointida datani change qilish: PUT va PATCH boyicha
+    - ChangeUserPhoto() - serializer -> view -> check Postman
+9. User Login
+    - LoginSerializer > auth_validate, auth_kwargs, validate, get_user
+    - LoginView > views yozilishi
+    - LoginRefreshSerializer > yangi access token berish uchun refresh token hosil qilish
+    - Logout: LogoutSerializer va LogoutView -> Postman: Login orqali access token olinib, logout endpoint auth qismiga kiritilgach, refresh token request jonatiladi va logout qilinadi.
+    - ForgotPassword > serializer, view, Postman request
+    - ResetPassword > serializer, view, Postman request PATCH
+10. Database design: drawsql 
+11. Post app
+    - creation of post app > settings, urls, serializer establishment
+    - models.py: Post, PostComment, PostLike, CommentLike
+    - serializers.py: Serializers for each - (SerializerMethodField - o'zimiz yozgan metod asosida ishlaydigan serializer fieldi)
+    - admin.py: har biri uchun Admin classlari. migrate qilinib adminkada check qilish
+12. Post VIEWS
+    - views.py: Har biri uchun view yozib Postmanda tekshirish. me_liked qismi authdan otgandagini true korsatishi mumkin, unda ham user oz postiga like bosgan bolsa
+    - shared: Pagination: Bir vaqtda 1000 lab post kelsa, hammasini bittada chiqarish vaqt oladi, shu sabab pagination qilinadi.
+    - check qilish: create, update (PUT and PATCH) va delete metodlari
+13. Comment VIEWS
+    - CommentList, 
